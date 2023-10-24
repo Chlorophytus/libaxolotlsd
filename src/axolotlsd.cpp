@@ -27,6 +27,7 @@ using namespace axolotlsd;
 constexpr static U32 MAGIC = 0x41585344; // "AXSD"
 constexpr static U16 CURRENT_VERSION = 0x0003;
 constexpr static F32 A440 = 440.0f;
+constexpr static F32 TUNE_COEFF = 44100.0f / A440;
 
 const static std::map<command_type, size_t> byte_sizes{
     {command_type::note_on, sizeof(song_tick_t) + (sizeof(U8) * 3)},
@@ -160,7 +161,7 @@ void player::handle_one(F32 &l, F32 &r) {
           } else {
             auto &&ch_casted = static_cast<voice_group *>(ch.get());
             auto phase = calculate_12tet(ptr->note, ch_casted->bend) *
-                         frequency * 100.0f;
+                         frequency * TUNE_COEFF;
             ch_casted->voices.emplace_back(ptr->velocity / 127.0f, phase,
                                            ptr->note);
           }
@@ -189,7 +190,7 @@ void player::handle_one(F32 &l, F32 &r) {
                         [this, &ch_casted](auto &&c) {
                           c.phase_add_by =
                               calculate_12tet(c.note, ch_casted->bend) *
-                              frequency * 100.0f;
+                              frequency * TUNE_COEFF;
                         });
         }
         break;
