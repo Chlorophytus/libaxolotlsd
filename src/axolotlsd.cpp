@@ -64,9 +64,7 @@ sfx &player::queue_sfx(sfx &&sound) {
   return current_sfx.back();
 }
 
-void player::play(song &&next) {
-  std::swap(current, next);
-
+void player::play() {
   for (auto i = 0; i < 16; i++) {
     switch (i) {
     case 9: {
@@ -344,14 +342,18 @@ std::array<F32, 8> environment::parse_sfc_echo(std::array<U8, 8> &&in) {
   return filter;
 }
 // This convenience loads an "xxd -i" format song dump
-void player::play_xxd_format(unsigned char *data, unsigned int len) {
+void player::load_xxd_format(unsigned char *data, unsigned int len) {
   auto vec = std::vector<U8>{};
   vec.resize(len);
   for (auto i = 0; i < len; i++) {
     vec[i] = data[i];
   }
-  song::load(vec);
+  current = song::load(vec);
 }
+void player::load(song &&next) {
+	std::swap(current, next);
+}
+
 sfx sfx::load_xxd_format(unsigned char *data, unsigned int len) {
   auto list = std::list<U8>{};
   for (auto i = 0; i < len; i++) {

@@ -195,8 +195,9 @@ struct player {
 
   void put_environment(std::optional<environment> &&);
   sfx &queue_sfx(sfx &&);
-  void play(song &&);
-  void play_xxd_format(unsigned char *, unsigned int);
+  void load(song &&);
+  void load_xxd_format(unsigned char *, unsigned int);
+	void play();
   void pause();
   void tick(std::vector<F32> &);
   void handle_one(F32 &, F32 &);
