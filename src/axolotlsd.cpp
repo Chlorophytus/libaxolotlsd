@@ -259,11 +259,15 @@ void player::maybe_echo_one(F32 &l, F32 &r) {
 void player::handle_sfx(F32 &l, F32 &r) {
   std::erase_if(current_sfx, [](auto &&s) { return s.data.empty(); });
   std::for_each(current_sfx.begin(), current_sfx.end(), [&l, &r](auto &&s) {
+		s.accumulator -= s.pitch;
     const auto sfx_byte =
         static_cast<F32>(S16{s.data.front()} - 127) / 128.0f;
     l += sfx_byte * s.pan_L;
     r += sfx_byte * s.pan_R;
-    s.data.pop_front();
+		if(s.accumulator < 1.0f && !s.data.empty()) {
+			s.data.pop_front();
+			s.accumulator += 1.0f;
+		}
   });
 }
 
@@ -319,6 +323,13 @@ song song::load_xxd_format(unsigned char *data, unsigned int len) {
     vec[i] = data[i];
   }
   return song::load(vec);
+}
+sfx sfx::load_xxd_format(unsigned char *data, unsigned int len) {
+	auto list = std::list<U8>{};
+	for(auto i = 0; i < len; i++) {
+		list.emplace_back(data[i]);
+	}
+	return sfx{.data = list};
 }
 
 song song::load(std::vector<U8> &data) {

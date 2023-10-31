@@ -158,9 +158,13 @@ struct environment {
   U16 cursor_max;
 };
 struct sfx {
-  F32 pan_L;
-  F32 pan_R;
+  F32 pan_L = 1.0f;
+  F32 pan_R = 1.0f;
+	F32 pitch = 1.0f;
+	F32 accumulator = 0.0f;
   std::list<U8> data{};
+
+	static sfx load_xxd_format(unsigned char *, unsigned int);
 };
 struct player {
   F32 seconds_elapsed = 0.0f;
