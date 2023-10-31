@@ -257,7 +257,6 @@ void player::maybe_echo_one(F32 &l, F32 &r) {
 }
 
 void player::handle_sfx(F32 &l, F32 &r) {
-  std::erase_if(current_sfx, [](auto &&s) { return s.data.empty(); });
   std::for_each(current_sfx.begin(), current_sfx.end(), [&l, &r](auto &&s) {
 		s.accumulator -= s.pitch;
     const auto sfx_byte =
@@ -269,6 +268,7 @@ void player::handle_sfx(F32 &l, F32 &r) {
 			s.accumulator += 1.0f;
 		}
   });
+  std::erase_if(current_sfx, [](auto &&s) { return s.data.empty(); });
 }
 
 void player::tick(std::vector<F32> &audio) {
