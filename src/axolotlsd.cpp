@@ -263,6 +263,7 @@ void player::handle_sfx(F32 &l, F32 &r) {
         static_cast<F32>(S16{s.data.front()} - 127) / 128.0f;
     l += sfx_byte * s.pan_L;
     r += sfx_byte * s.pan_R;
+		s.data.pop_front();
 		if(s.accumulator < 1.0f && !s.data.empty()) {
 			s.data.pop_front();
 			s.accumulator += 1.0f;
