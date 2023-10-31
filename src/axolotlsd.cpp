@@ -259,8 +259,10 @@ void player::maybe_echo_one(F32 &l, F32 &r) {
 void player::handle_sfx(F32 &l, F32 &r) {
   std::erase_if(current_sfx, [](auto &&s) { return s.data.empty(); });
   std::for_each(current_sfx.begin(), current_sfx.end(), [&l, &r](auto &&s) {
-    l += s.data.front() * s.pan_L;
-    r += s.data.front() * s.pan_R;
+    const auto sfx_byte =
+        static_cast<F32>(S16{s.data.front()} - 127) / 128.0f;
+    l += sfx_byte * s.pan_L;
+    r += sfx_byte * s.pan_R;
     s.data.pop_front();
   });
 }
