@@ -154,17 +154,19 @@ struct environment {
   F32 feedback_R;
   F32 wet_L;
   F32 wet_R;
-  U16 cursor_increment;
   U16 cursor_max;
+
+  std::optional<std::array<F32, 8>> fir_filter = std::nullopt;
+	static std::array<F32, 8> parse_sfc_echo(std::array<U8, 8> &&);
 };
 struct sfx {
   F32 pan_L = 1.0f;
   F32 pan_R = 1.0f;
-	F32 pitch = 1.0f;
-	F32 accumulator = 0.0f;
+  F32 pitch = 1.0f;
+  F32 accumulator = 0.0f;
   std::list<U8> data{};
 
-	static sfx load_xxd_format(unsigned char *, unsigned int);
+  static sfx load_xxd_format(unsigned char *, unsigned int);
 };
 struct player {
   F32 seconds_elapsed = 0.0f;

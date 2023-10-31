@@ -237,8 +237,25 @@ void player::handle_one(F32 &l, F32 &r) {
 void player::maybe_echo_one(F32 &l, F32 &r) {
   if (env_params.has_value()) {
     auto &&env = env_params.value();
+
     echo_buffer_L[echo_cursor] += l;
     echo_buffer_R[echo_cursor] += r;
+
+    if (env.fir_filter.has_value()) {
+      auto &&fir = env.fir_filter.value();
+      auto fir_l = 0.0f;
+      auto fir_r = 0.0f;
+      auto iter = 0;
+      for (auto &&f : fir) {
+        const auto fir_cursor = (echo_cursor - iter) % env.cursor_max;
+        fir_l += echo_buffer_L[fir_cursor] * f;
+        fir_r += echo_buffer_R[fir_cursor] * f;
+        iter++;
+      }
+      echo_buffer_L[echo_cursor] += fir_l / 64.0f;
+      echo_buffer_R[echo_cursor] += fir_r / 64.0f;
+    }
+
     echo_buffer_L[echo_cursor] *= env.feedback_L;
     echo_buffer_R[echo_cursor] *= env.feedback_R;
 
@@ -250,7 +267,7 @@ void player::maybe_echo_one(F32 &l, F32 &r) {
 
     l = calculate_mix(l, echo_buffer_L[echo_cursor], env.wet_L);
     r = calculate_mix(r, echo_buffer_R[echo_cursor], env.wet_R);
-    echo_cursor += env.cursor_increment;
+    echo_cursor++;
     echo_cursor %= env.cursor_max;
   }
 }
@@ -271,8 +288,8 @@ void player::handle_sfx(F32 &l, F32 &r) {
     }
   });
   std::erase_if(current_sfx, [](auto &&s) { return s.data.empty(); });
-	l = std::clamp(l, -1.0f, 1.0f);
-	r = std::clamp(r, -1.0f, 1.0f);
+  l = std::clamp(l, -1.0f, 1.0f);
+  r = std::clamp(r, -1.0f, 1.0f);
 }
 
 void player::tick(std::vector<F32> &audio) {
@@ -319,6 +336,13 @@ void player::tick(std::vector<F32> &audio) {
   }
 }
 
+std::array<F32, 8> environment::parse_sfc_echo(std::array<U8, 8> &&in) {
+  auto filter = std::array<F32, 8>{0.0f};
+  for (auto i = 0; i < 8; i++) {
+    filter[i] = static_cast<F32>(std::bit_cast<S8>(in[i])) / 128.0f;
+  }
+  return filter;
+}
 // This convenience loads an "xxd -i" format song dump
 song song::load_xxd_format(unsigned char *data, unsigned int len) {
   auto vec = std::vector<U8>{};
