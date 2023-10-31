@@ -141,7 +141,6 @@ void drum_group::accumulate_into(const drum_map_t &mapping, F32 &l, F32 &r) {
       gain_L = patch.gain_L;
       gain_R = patch.gain_R;
       d.phase += d.phase_add_by;
-      d.phase = std::fmod(d.phase, patch.ratio * patch.waveform.size() * 2.0f);
     } else {
       d.active = false;
     }
@@ -258,18 +257,22 @@ void player::maybe_echo_one(F32 &l, F32 &r) {
 
 void player::handle_sfx(F32 &l, F32 &r) {
   std::for_each(current_sfx.begin(), current_sfx.end(), [&l, &r](auto &&s) {
-		s.accumulator -= s.pitch;
-    const auto sfx_byte =
-        static_cast<F32>(S16{s.data.front()} - 127) / 128.0f;
+    s.accumulator -= s.pitch;
+    const auto sfx_byte = static_cast<F32>(S16{s.data.front()} - 127) / 128.0f;
     l += sfx_byte * s.pan_L;
     r += sfx_byte * s.pan_R;
-		s.data.pop_front();
-		if(s.accumulator < 1.0f && !s.data.empty()) {
-			s.data.pop_front();
-			s.accumulator += 1.0f;
-		}
+    s.data.pop_front();
+    while (s.accumulator < 1.0f) {
+      if (s.data.empty()) {
+        break;
+      }
+      s.data.pop_front();
+      s.accumulator += 1.0f;
+    }
   });
   std::erase_if(current_sfx, [](auto &&s) { return s.data.empty(); });
+	l = std::clamp(l, -1.0f, 1.0f);
+	r = std::clamp(r, -1.0f, 1.0f);
 }
 
 void player::tick(std::vector<F32> &audio) {
@@ -326,11 +329,11 @@ song song::load_xxd_format(unsigned char *data, unsigned int len) {
   return song::load(vec);
 }
 sfx sfx::load_xxd_format(unsigned char *data, unsigned int len) {
-	auto list = std::list<U8>{};
-	for(auto i = 0; i < len; i++) {
-		list.emplace_back(data[i]);
-	}
-	return sfx{.data = list};
+  auto list = std::list<U8>{};
+  for (auto i = 0; i < len; i++) {
+    list.emplace_back(data[i]);
+  }
+  return sfx{.data = list};
 }
 
 song song::load(std::vector<U8> &data) {
