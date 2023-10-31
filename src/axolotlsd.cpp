@@ -55,9 +55,16 @@ static F32 calculate_mix(F32 x, F32 y, F32 a) {
 player::player(U32 count, U32 freq, bool stereo)
     : frequency{1.0f / freq}, in_stereo{stereo}, max_voices{count} {}
 
-void player::play(song &&next, std::optional<environment> &&env) {
+void player::put_environment(std::optional<environment> &&next_env) {
+  std::swap(env_params, next_env);
+}
 
-  std::swap(env_params, env);
+sfx &player::queue_sfx(sfx &&sound) {
+  current_sfx.emplace_back(sound);
+  return current_sfx.back();
+}
+
+void player::play(song &&next) {
   std::swap(current, next);
 
   for (auto i = 0; i < 16; i++) {
@@ -109,6 +116,7 @@ void voice_group::accumulate_into(const patch_t &patch, F32 &l, F32 &r) {
       sample = (static_cast<F32>(patch.waveform.at(here)) - 128.0f) / 128.0f;
     }
     v.phase += v.phase_add_by;
+    v.phase = std::fmod(v.phase, patch.ratio * patch.waveform.size() * 2.0f);
 
     l += sample * v.velocity * patch.gain_L;
     r += sample * v.velocity * patch.gain_R;
@@ -120,7 +128,7 @@ void drum_group::accumulate_into(const drum_map_t &mapping, F32 &l, F32 &r) {
     auto sample = 0.0f;
     auto &&map_found = mapping.find(d.note);
     auto gain_L = 0.0f;
-		auto gain_R = 0.0f;
+    auto gain_R = 0.0f;
 
     if (map_found != mapping.end()) {
       auto &&[_, patch] = *map_found;
@@ -133,6 +141,7 @@ void drum_group::accumulate_into(const drum_map_t &mapping, F32 &l, F32 &r) {
       gain_L = patch.gain_L;
       gain_R = patch.gain_R;
       d.phase += d.phase_add_by;
+      d.phase = std::fmod(d.phase, patch.ratio * patch.waveform.size() * 2.0f);
     } else {
       d.active = false;
     }
@@ -247,6 +256,15 @@ void player::maybe_echo_one(F32 &l, F32 &r) {
   }
 }
 
+void player::handle_sfx(F32 &l, F32 &r) {
+  std::erase_if(current_sfx, [](auto &&s) { return s.data.empty(); });
+  std::for_each(current_sfx.begin(), current_sfx.end(), [&l, &r](auto &&s) {
+    l += s.data.front() * s.pan_L;
+    r += s.data.front() * s.pan_R;
+    s.data.pop_front();
+  });
+}
+
 void player::tick(std::vector<F32> &audio) {
   const auto size = audio.size();
   if (in_stereo) {
@@ -264,6 +282,7 @@ void player::tick(std::vector<F32> &audio) {
         }
       }
 
+      handle_sfx(l, r);
       maybe_echo_one(l, r);
       audio[i + 0] = std::clamp(l, -1.0f, 1.0f);
       audio[i + 1] = std::clamp(r, -1.0f, 1.0f);
@@ -283,6 +302,7 @@ void player::tick(std::vector<F32> &audio) {
         }
       }
 
+      handle_sfx(l, r);
       maybe_echo_one(l, r);
       audio[i] = std::clamp((l + r) / 2.0f, -1.0f, 1.0f);
     }
@@ -291,12 +311,12 @@ void player::tick(std::vector<F32> &audio) {
 
 // This convenience loads an "xxd -i" format song dump
 song song::load_xxd_format(unsigned char *data, unsigned int len) {
-	auto vec = std::vector<U8>{};
-	vec.resize(len);
-	for(auto i = 0; i < len; i++) {
-		vec[i] = data[i];
-	}
-	return song::load(vec);
+  auto vec = std::vector<U8>{};
+  vec.resize(len);
+  for (auto i = 0; i < len; i++) {
+    vec[i] = data[i];
+  }
+  return song::load(vec);
 }
 
 song song::load(std::vector<U8> &data) {

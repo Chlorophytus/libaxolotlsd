@@ -18,6 +18,7 @@
 #include "axolotlsd_configuration.hpp"
 #include <array>
 #include <cstdint>
+#include <list>
 #include <map>
 #include <memory>
 #include <optional>
@@ -156,6 +157,11 @@ struct environment {
   U16 cursor_increment;
   U16 cursor_max;
 };
+struct sfx {
+  F32 pan_L;
+  F32 pan_R;
+  std::list<U8> data{};
+};
 struct player {
   F32 seconds_elapsed = 0.0f;
   F32 seconds_end;
@@ -178,13 +184,17 @@ struct player {
 
   std::array<std::unique_ptr<voice_group_base>, 16> channels{};
   std::array<std::optional<U8>, 16> patch_ids{std::nullopt};
+  std::vector<sfx> current_sfx{};
 
   bool playback = false;
 
-  void play(song &&, std::optional<environment> &&);
+  void put_environment(std::optional<environment> &&);
+  sfx &queue_sfx(sfx &&);
+  void play(song &&);
   void pause();
   void tick(std::vector<F32> &);
   void handle_one(F32 &, F32 &);
+  void handle_sfx(F32 &, F32 &);
   void maybe_echo_one(F32 &, F32 &);
 };
 } // namespace axolotlsd
