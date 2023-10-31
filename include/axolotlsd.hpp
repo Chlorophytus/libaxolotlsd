@@ -147,7 +147,6 @@ struct song {
   drum_map_t drums{};
 
   static song load(std::vector<U8> &);
-  static song load_xxd_format(unsigned char *, unsigned int);
 };
 struct environment {
   F32 feedback_L;
@@ -197,6 +196,7 @@ struct player {
   void put_environment(std::optional<environment> &&);
   sfx &queue_sfx(sfx &&);
   void play(song &&);
+  void play_xxd_format(unsigned char *, unsigned int);
   void pause();
   void tick(std::vector<F32> &);
   void handle_one(F32 &, F32 &);

@@ -344,13 +344,13 @@ std::array<F32, 8> environment::parse_sfc_echo(std::array<U8, 8> &&in) {
   return filter;
 }
 // This convenience loads an "xxd -i" format song dump
-song song::load_xxd_format(unsigned char *data, unsigned int len) {
+void player::play_xxd_format(unsigned char *data, unsigned int len) {
   auto vec = std::vector<U8>{};
   vec.resize(len);
   for (auto i = 0; i < len; i++) {
     vec[i] = data[i];
   }
-  return song::load(vec);
+  song::load(vec);
 }
 sfx sfx::load_xxd_format(unsigned char *data, unsigned int len) {
   auto list = std::list<U8>{};

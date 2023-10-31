@@ -22,7 +22,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Project instantiation
 project(axolotlsd LANGUAGES CXX
-	VERSION 0.5.0.14
+	VERSION 0.6.0.15
 	DESCRIPTION "A C++20 implementation of the AxolotlSD wavetable sound driver"
 	HOMEPAGE_URL "https://github.com/Chlorophytus/AxolotlSD"
 )
