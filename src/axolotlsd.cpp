@@ -306,7 +306,10 @@ void player::tick(std::vector<F32> &audio) {
           last_cursor = std::nullopt;
         }
       }
-
+      
+      l *= master_volume;
+      r *= master_volume;
+      
       handle_sfx(l, r);
       maybe_echo_one(l, r);
       audio[i + 0] = std::clamp(l, -1.0f, 1.0f);
@@ -327,6 +330,9 @@ void player::tick(std::vector<F32> &audio) {
         }
       }
 
+      l *= master_volume;
+      r *= master_volume;
+      
       handle_sfx(l, r);
       maybe_echo_one(l, r);
       audio[i] = std::clamp((l + r) / 2.0f, -1.0f, 1.0f);

@@ -173,6 +173,7 @@ struct player {
   F32 frequency;
   U32 max_voices;
   U32 on_voices = 0;
+  F32 master_volume = 1.0f;
 
   F32 echo_buffer_L[65535]{0.0f};
   F32 echo_buffer_R[65535]{0.0f};
